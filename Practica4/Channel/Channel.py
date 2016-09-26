@@ -7,6 +7,7 @@ sys.path.append('../Constants/')
 from Constants.Constants import *
 from ApiServer import MyApiServer
 from ApiClient import MyApiClient
+from ApiServer import *
 from threading import Thread
 
 """**************************************************
@@ -51,6 +52,12 @@ class Channel():
     #Metodo para "colgar" (más bien suspender) la llamada.
     def colgar(self):
         self.client.colgar()
+        
+    #Metodo para iniciar la transmision de video.    
+    def videollamar(self):
+        self.videoThread = Thread(target=self.client.envia_video)
+        self.videoThread.daemon = True
+        self.videoThread.start()
 
     #Método para regresar a la llamada o iniciar una nueva.
     def llamar(self):        

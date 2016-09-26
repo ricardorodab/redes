@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 import sys
 import socket
-import pyaudio
+
 sys.path.append('../Constants/')
 import SimpleXMLRPCServer
-from Constants.Constants import *
+from Constants.Constants import DEFAULT_PORT
+from Constants.Constants import MENSAJE_VISTA
 from Constants.Singleton import *
 
-#Función para optener nuestra ip local.
+
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.connect(("google.com",80))
@@ -39,20 +40,6 @@ class FunctionWrapper:
         self.interfaz = interfaz
         pass
 
-    #Creamos el wrapper del sonido.
-    def sendVoice_wrapper(self, audio):
-        my_pyaudio = pyaudio.PyAudio()
-        FORMAT = my_pyaudio.get_format_from_width(2)
-        stream = my_pyaudio.open(format=FORMAT,
-                        channels=1,
-                        rate=RATE,
-                        output=True,
-                        frames_per_buffer=CHUNK)
-        data = audio.data
-        stream.write(data)
-        stream.close()
-        my_pyaudio.terminate()
-
     """ **************************************************
     Procedimiento que ofrece nuestro servidor, este metodo sera llamado
     por el cliente con el que estamos hablando, debe de
@@ -61,7 +48,7 @@ class FunctionWrapper:
     def sendMessage_wrapper(self, message):
         # Regresamos el mensaje pa' que lo agarre el servidor:
         self.interfaz.plainTextEdit.insertPlainText("Contacto: "+message+ "\n")
-        self.interfaz.plainTextEdit.insertPlainText("\n")                
+        self.interfaz.plainTextEdit.insertPlainText("\n")
         print message
 
 

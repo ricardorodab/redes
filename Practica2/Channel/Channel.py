@@ -4,7 +4,7 @@ import sys, getopt
 sys.path.insert(0, '/')
 sys.path.insert(0, '../Constants')
 sys.path.append('../Constants/')
-from Constants.Constants import *
+from Constants.Constants import DEFAULT_PORT
 from ApiServer import MyApiServer
 from ApiClient import MyApiClient
 from threading import Thread
@@ -47,13 +47,5 @@ class Channel():
     **************************************************"""
     def send_text(self, text):
         self.client.muestra_texto(text)
+        
 
-    #Metodo para "colgar" (más bien suspender) la llamada.
-    def colgar(self):
-        self.client.colgar()
-
-    #Método para regresar a la llamada o iniciar una nueva.
-    def llamar(self):        
-        self.llamadaThread = Thread(target=self.client.envia_audio)  
-        self.llamadaThread.daemon = True        
-        self.llamadaThread.start()

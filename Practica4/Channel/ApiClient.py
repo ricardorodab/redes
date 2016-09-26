@@ -7,7 +7,10 @@ from Constants.Constants import *
 import multiprocessing
 import threading
 import pyaudio
+import cv2
+from numpy.lib import format as fmt
 import numpy
+from cStringIO import StringIO
 """Constantes para la reproduccion de audio. """
 
 class MyApiClient:
@@ -16,6 +19,7 @@ class MyApiClient:
     def __init__(self, ip = None, my_port = DEFAULT_PORT):
         # El servidor que nos mandará el texto:
         self.llamada = False
+        self.video = False
         self.my_port = my_port
         self.ip_dest = ip
         if not ip:
@@ -26,10 +30,19 @@ class MyApiClient:
     """ Metodo que modifica nuestra variable de clase para saber cuando seguir transmitiendo. """        
     def colgar(self):
         self.llamada = False
+        self.video = False
 
     def reiniciar(self):
         self.llamada = True
-            
+        self.video = True
+        
+    """Metodo para enviar video a nuestro servidor destino y agregarlo a una cola."""
+    def envia_video(self):        
+        self.queue_video = multiprocessing.Queue()
+        self.hilo_video = threading.Thread(target=self.funcion_video, args=(self.server,))
+        self.hilo_video.daemon = True
+        self.hilo_video.start()        
+
     """ Metodo para enviar audio a nuestro servidor destino y agregarlo a una cola. """
     def envia_audio(self):
         if not self.llamada:
@@ -52,12 +65,29 @@ class MyApiClient:
         self.pyaudio = pyaudio.PyAudio()
         self.pyaudio_format = self.pyaudio.get_format_from_width(2)
         self.stream = self.pyaudio.open(format=self.pyaudio_format, channels=1, rate=44100, input=True, frames_per_buffer=1024)
-        while True:
+        while self.llamada:
             frame = []
             for i in range(0,int(RATE/CHUNK *RECORD_SECONDS)):
-                frame.append(self.stream.read(CHUNK))
+                try:
+                    frame.append(self.stream.read(CHUNK))
+                except:
+                    frame.append(self.stream.read(CHUNK))
             data_ar = numpy.fromstring(''.join(frame),  dtype=numpy.uint8)
             cola.put(data_ar)
+    
+    """ En esta funcion hacemos el envio del video al servidor """
+    def funcion_video(self, cola):
+        cap = cv2.VideoCapture(0)
+	while self.video:
+	    ret, frame = cap.read()
+            f = StringIO()
+	    fmt.write_array(f,frame)
+	    data = xmlrpclib.Binary(f.getvalue())
+	    cola.sendImage_wrapper(data)            	
+        cap.release()
+	cola.stopImage_wrapper()
+        cv2.destroyAllWindows()
+
 
     # Muestra el texto recibido
     def muestra_texto(self, texto):
